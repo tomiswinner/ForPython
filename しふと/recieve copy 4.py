@@ -72,6 +72,17 @@ def getHolidayReq():
     # print(希望休リスト
     return 希望休リスト
 
+def getNumOfMemberWorkingWeekDay():
+    global シート1
+    print(シート1[15][1].value)
+    return シート1[15][1].value
+
+def getNumOfMemberWorkingWeekEnd():
+    global シート1
+    return シート1[16][1].value
+
+
+
 def getWorkdayReq():
     global シート1
     マスト勤務リスト =[]
@@ -101,16 +112,6 @@ def decideWorkMem():
     # if isListHasDuplicate(workMembersList):
     #ここ、excel側でエラーを投げたい。どうやろう？
     return workMembersList
-
-
-
-
-
-
-
-
-
-
 
 
 def isListHasDuplicate(sequence):
@@ -155,6 +156,7 @@ v割当 = np.array(op.addbinvars(df.shape[0],df.shape[1]-2))
 #   //必要な条件はなんでしょうか？
 #   //① 平日は2人基本的に必要 => 定数y行 のxの合計が3となればよい
 c平日 = 100
+c平日必用人数 = getNumOfMemberWorkingWeekDay()
 c平日soft = 50
 v平日不足 = op.addvars(len(dateset))
 v平日不足soft = op.addvars(len(dateset))
@@ -163,6 +165,7 @@ v平日不足soft = op.addvars(len(dateset))
 
 #   //② 土日は4人必要  => 定数y行 のxの合計が5
 c休日 = 100
+c休日必用人数 = getNumOfMemberWorkingWeekEnd()
 v休日不足 = op.addvars(len(dateset))
 c休日soft = 50
 v休日不足soft = op.addvars(len(dateset))
@@ -201,16 +204,16 @@ c計休 * pp.lpSum(v計休不足)
 #V割当は二次元配列。
 for _,elem in dfWeekday.iterrows():
     # print(v平日不足[elem.name])
-    m += pp.lpSum(v割当[elem.name]) + v平日不足[elem.name] >= 2 # V割当の合計が、2以上でないとき、V平日不足が自動的に補うように設定され、スコアが大きくなってしまう
+    m += pp.lpSum(v割当[elem.name]) + v平日不足[elem.name] >= c平日必要人数 -1 # V割当の合計が、2以上でないとき、V平日不足が自動的に補うように設定され、スコアが大きくなってしまう
 
 for _,elem in dfWeekday.iterrows():
-    m += pp.lpSum(v割当[elem.name]) + v平日不足soft[elem.name] >=3
+    m += pp.lpSum(v割当[elem.name]) + v平日不足soft[elem.name] >= c平日必用人数
 
 for _,elem in dfWeekend.iterrows():
-    m += pp.lpSum(v割当[elem.name]) + v休日不足[elem.name] >= 3 #同上。休日ver
+    m += pp.lpSum(v割当[elem.name]) + v休日不足[elem.name] >= c休日必要人数 -1 #同上。休日ver
 
 for _,elem in dfWeekend.iterrows():
-    m += pp.lpSum(v割当[elem.name]) + v休日不足soft[elem.name] >= 4
+    m += pp.lpSum(v割当[elem.name]) + v休日不足soft[elem.name] >= c休日必用人数
 
 #従業員ごとの計休が出されてるか。チェック（列ごと）
 def fuckingFunc():
